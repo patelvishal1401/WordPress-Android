@@ -3,6 +3,7 @@ package org.wordpress.android.ui.notifications;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Html;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +31,6 @@ public class NoteMatcherFragment extends Fragment implements NotificationFragmen
         if (getNote() == null)
             return view;        
 
-        JSONObject noteBody = getNote().queryJSON("body", new JSONObject());
         JSONArray noteBodyItems = getNote().queryJSON("body.items", new JSONArray());
         JSONObject noteBodyItemAtPositionZero = JSONUtil.queryJSON(noteBodyItems, String.format("[%d]", 0), new JSONObject());
         
@@ -40,7 +40,14 @@ public class NoteMatcherFragment extends Fragment implements NotificationFragmen
         noteHeader.setText(headerText);
         noteHeader.setBackgroundColor(getResources().getColor(R.color.light_gray));
         noteHeader.getTextView().setGravity(Gravity.CENTER_HORIZONTAL);
-        noteHeader.setClickable(false);
+
+        JSONObject bodyObject =  getNote().queryJSON("body", new JSONObject());
+        String itemURL = JSONUtil.getString(bodyObject, "header_link");
+        if (TextUtils.isEmpty(itemURL)) {
+            noteHeader.setUrl(itemURL);
+        }
+        noteHeader.setNote(getNote());
+        noteHeader.setClickable(true);
         
         String gravURL = JSONUtil.queryJSON(noteBodyItemAtPositionZero, "icon", "");
         if (!gravURL.equals("")) {
@@ -52,16 +59,6 @@ public class NoteMatcherFragment extends Fragment implements NotificationFragmen
         bodyTextView.setMovementMethod(WPLinkMovementMethod.getInstance());
         String noteHTML = JSONUtil.getString(noteBodyItemAtPositionZero, "html");
         bodyTextView.setText(Html.fromHtml(noteHTML));
-
-        //setup the footer
-        DetailHeader noteFooter = (DetailHeader) view.findViewById(R.id.footer);
-        String footerText = JSONUtil.getStringDecoded(noteBody, "header_text");
-        noteFooter.setText(footerText);
-        JSONObject bodyObject =  getNote().queryJSON("body", new JSONObject());
-        String itemURL = JSONUtil.getString(bodyObject, "header_link");
-        if (!itemURL.equals("")) {
-            noteFooter.setUrl(itemURL);
-        }
 
         return view;
     }

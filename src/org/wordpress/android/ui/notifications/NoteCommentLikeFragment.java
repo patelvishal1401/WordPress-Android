@@ -5,7 +5,7 @@ package org.wordpress.android.ui.notifications;
 
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.view.Gravity;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +15,6 @@ import android.widget.ListView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.wordpress.android.R;
 import org.wordpress.android.WordPress;
 import org.wordpress.android.models.Note;
@@ -49,17 +48,19 @@ public class NoteCommentLikeFragment extends ListFragment implements Notificatio
         // set the header
         LayoutInflater inflater = getActivity().getLayoutInflater();
         DetailHeader noteHeader = (DetailHeader) inflater.inflate(R.layout.notifications_detail_header, null);
-        noteHeader.setText(getHeaderText());
-        noteHeader.setBackgroundColor(getResources().getColor(R.color.light_gray));
-        noteHeader.getTextView().setGravity(Gravity.CENTER_HORIZONTAL);
-        noteHeader.setClickable(false);
-        list.addHeaderView(noteHeader);
-        
-        // set the footer
-        DetailHeader noteFooter = (DetailHeader) inflater.inflate(R.layout.notifications_detail_header, null);        
         JSONObject bodyObject =  getNote().queryJSON("body", new JSONObject());
+        noteHeader.setText(getNote().getSubject());
+        String headerUrl = JSONUtil.getString(bodyObject, "header_link");
+        if (!TextUtils.isEmpty(headerUrl)) {
+            noteHeader.setUrl(headerUrl);
+        }
+        noteHeader.setNote(getNote());
+        list.addHeaderView(noteHeader);
+
+        // set the footer
+        DetailHeader noteFooter = (DetailHeader) inflater.inflate(R.layout.notifications_detail_header, null);
         String footerText = getFooterText();
-        if (!footerText.equals("")) {
+        if (!TextUtils.isEmpty(footerText)) {
             noteFooter.setText(footerText);
             String footerUrl = JSONUtil.getString(bodyObject, "header_link");
             if (!footerUrl.equals("")) {
@@ -67,7 +68,8 @@ public class NoteCommentLikeFragment extends ListFragment implements Notificatio
             }
             list.addFooterView(noteFooter);
         }
-        // set the adapter
+
+            // set the adapter
         setListAdapter(new NoteAdapter());
     }
     
@@ -86,17 +88,17 @@ public class NoteCommentLikeFragment extends ListFragment implements Notificatio
         return mNote;
     }
     
-    private String getHeaderText() {
+    private String getFooterText() {
         JSONArray mItems = getNote().queryJSON("body.items", new JSONArray());
         JSONObject noteItem = JSONUtil.queryJSON(mItems, String.format("[%d]", 0), new JSONObject());
         return JSONUtil.getStringDecoded(noteItem, "header_text");
     }
     
-    private String getFooterText() {
+    /*private String getFooterText() {
         JSONArray mItems = getNote().queryJSON("body.items", new JSONArray());
         JSONObject noteItem = JSONUtil.queryJSON(mItems, String.format("[%d]", 0), new JSONObject());
         return JSONUtil.getStringDecoded(noteItem, "html");
-    }
+    }*/
     
     class NoteAdapter extends BaseAdapter {
         private JSONArray mItems;
